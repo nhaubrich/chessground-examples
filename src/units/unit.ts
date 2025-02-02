@@ -9,6 +9,7 @@ import * as svg from './svg';
 import * as in3d from './in3d';
 import * as fen from './fen';
 import * as viewOnly from './viewOnly';
+import * as puzzle from './puzz';
 
 export interface Unit {
   name: string;
@@ -23,6 +24,7 @@ export const list: Unit[] = [
   basics.unselectable,
   basics.unselectableDraggable,
   basics.selectableUndraggable,
+  puzzle.puzzle,
   play.initial,
   play.castling,
   play.vsRandom,

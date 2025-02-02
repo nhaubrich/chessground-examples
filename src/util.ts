@@ -2,6 +2,12 @@ import { Api } from 'chessground/api';
 import { Color, Key } from 'chessground/types';
 import {ChessInstance, SQUARES} from 'chess.js';
 
+export function san_to_uci(chess, san) {
+    let move = chess.move(san);
+    chess.undo();
+    return {from: move.from, to: move.to};
+}
+
 export function toDests(chess: ChessInstance): Map<Key, Key[]> {
   const dests = new Map();
   SQUARES.forEach(s => {
