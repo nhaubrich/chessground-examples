@@ -46,6 +46,12 @@ export const puzzle: Unit = {
     };
     async function displayPuzzle(rating) {
         console.log("puzzle rating",rating);
+        
+        const element = document.getElementById("currentRating");
+        if (element){
+            element.textContent = "Current Rating: "+String(rating);
+        }
+        
         const [chess,data] = await fetchPuzzleData(rating);
         const fen = chess.fen()
         console.log(chess.fen());
