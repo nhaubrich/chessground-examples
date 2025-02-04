@@ -17,9 +17,7 @@ export const puzzle: Unit = {
     
     async function getPuzzleIdByRating(rating) {
       const tableResponse = await fetch("../../assets/puzzleIds.json");
-      console.log(tableResponse); 
       const puzzleIdTable = await tableResponse.json();
-      console.log(puzzleIdTable);
 
       const ratingBin = Math.max( Math.min( Math.round(rating/50)*50, 3000),400);
       const puzzleIds = puzzleIdTable["PuzzleId"][ratingBin];
@@ -29,19 +27,15 @@ export const puzzle: Unit = {
       return puzzleIds[randomIdx]
     }
 
-    async function fetchData() {
+    async function fetchPuzzleData(rating) {
       chess = new Chess();
-      console.log(chess.fen())
 
       var response = await fetch('https://lichess.org/api/puzzle/next');
       if(true){ 
-          const puzzleId = await getPuzzleIdByRating(600);
-          console.log(puzzleId)
+          const puzzleId = await getPuzzleIdByRating(rating);
           response = await fetch('https://lichess.org/api/puzzle/'+puzzleId);
-          console.log(response);
       }
       const data = await response.json();
-      console.log(data.puzzle);
       var moveList = data.game.pgn.split(" ")
       
       for (var i=0; i < data.puzzle.initialPly; i++) {
@@ -49,8 +43,9 @@ export const puzzle: Unit = {
       };
       return [chess,data];
     };
-    async function displayPuzzle() {
-        const [chess,data] = await fetchData();
+    async function displayPuzzle(rating) {
+        console.log("puzzle rating",rating);
+        const [chess,data] = await fetchPuzzleData(rating);
         const fen = chess.fen()
         console.log(chess.fen());
         var moveIdx = 0;
@@ -69,8 +64,6 @@ export const puzzle: Unit = {
         //make initial move
         var moveList = data.game.pgn.split(" ");
         const firstMoveSan = moveList[data.puzzle.initialPly];
-        console.log("first move");
-        console.log(firstMoveSan);
         const firstMoveUci = san_to_uci(chess,firstMoveSan);
         chess.move(firstMoveSan);
         cg.move(firstMoveUci[0],firstMoveUci[1]);
@@ -82,42 +75,32 @@ export const puzzle: Unit = {
             dests: toDests(chess)
           }
         });
-        
+        var flawless = true; 
         cg.set({
-          movable: { events: { after: checkPuzzle(cg, chess,data, moveIdx) } }
+          movable: { events: { after: checkPuzzle(cg, chess,data, moveIdx, rating,flawless) } }
         });
         return cg;
     }
-    function checkPuzzle(cg,chess,data,moveIdx){
+    function checkPuzzle(cg,chess,data,moveIdx,rating,flawless){
         return (orig, dest) => {
-        console.log("checkPuzzle");
-        console.log(orig,dest);
+        console.log("flawless",flawless );
         
-        console.log(chess.fen())
-        let output = chess.move({from: orig, to: dest, promotion: 'q'});//unable to select promotion ??? consider https://github.com/hi-ogawa/chessground-promotion
-        console.log(output);
-        console.log(chess.fen())
-        //const plyCount = chess.history().length;
-        console.log(moveIdx,data.puzzle.solution);
+        chess.move({from: orig, to: dest, promotion: 'q'});//unable to select promotion ??? consider https://github.com/hi-ogawa/chessground-promotion
+        
+        //console.log(moveIdx,data.puzzle.solution);
         if ( moveIdx < data.puzzle.solution.length ){
-            console.log("checking move")
             //lichess solution moves are in uci
             const correctMove = data.puzzle.solution[moveIdx];
             const lastPlayedMove = orig+dest;
-            console.log("target",correctMove,"guess",lastPlayedMove);
+            //console.log("target",correctMove,"guess",lastPlayedMove);
             if ( lastPlayedMove == correctMove ){
-                console.log("correct") 
 
                 //if last move of solution, win! 
                 //else, play next
                 const nextMove = uciToMove(data.puzzle.solution[moveIdx+1]);
                 if(!(nextMove == null) ){
-                    console.log(moveIdx+1,data.puzzle.solution[moveIdx+1],data.puzzle.solution);
-                    console.log(nextMove);
                     chess.move({from: nextMove[0], to: nextMove[1], promotion: nextMove[2]});
                     cg.move(nextMove[0],nextMove[1]);
-                    console.log(chess.fen());
-                    console.log(toColor(chess));
                     cg.set({
                       turnColor: toColor(chess),
                       movable: {
@@ -126,7 +109,6 @@ export const puzzle: Unit = {
                       }
                     });
                 }else{
-                    console.log("finished!")
                     cg.set({
                       selectable: {
                         enabled: false,
@@ -135,11 +117,16 @@ export const puzzle: Unit = {
                         enabled: false,
                       },
                     });
-                    displayPuzzle();
+                    if (flawless){
+                        displayPuzzle(rating+30);
+                    }else{
+                        displayPuzzle(rating-30);
+                    }
                 }
                 moveIdx=moveIdx+2;
             }else {
                 console.log("wrong move")
+                flawless=false;
                 //undo move on chess and cg?
                 chess.undo();
                 
@@ -155,7 +142,8 @@ export const puzzle: Unit = {
         }
         };
     }
-    displayPuzzle();
+    var startingRating=800;
+    displayPuzzle(startingRating);
 
     //dummy return. Can I remove this?
     const cg = Chessground(el, {
