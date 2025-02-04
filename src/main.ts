@@ -62,39 +62,7 @@ export function run(element: Element) {
         }),
         h('p', unit.name),
       ]),
-      h('control', [
-        h(
-          'button',
-          {
-            on: {
-              click() {
-                cg.toggleOrientation();
-              },
-            },
-          },
-          'Toggle orientation'
-        ),
-        h('label.zoom', [
-          'Zoom',
-          h(
-            'input',
-            {
-              attrs: {
-                type: 'number',
-                value: lastZoom,
-              },
-              on: {
-                change(e) {
-                  const zoom = parseFloat((e.target as HTMLInputElement).value);
-                  localStorage.setItem('lichess-dev.cge.zoom', zoom.toString());
-                  setZoom(zoom);
-                },
-              },
-            },
-            'Toggle orientation'
-          ),
-        ]),
-      ]),
+      //h('control', [ h( 'button', { on: { click() { cg.toggleOrientation(); }, }, }, 'Toggle orientation'), h('label.zoom', [ 'Zoom', h( 'input', { attrs: { type: 'number', value: lastZoom, }, on: { change(e) { const zoom = parseFloat((e.target as HTMLInputElement).value); localStorage.setItem('lichess-dev.cge.zoom', zoom.toString()); setZoom(zoom); }, }, }, 'Toggle orientation'), ]), ]),
     ]);
   }
 
