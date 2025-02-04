@@ -38,21 +38,21 @@ export function run(element: Element) {
 
   function render() {
     return h('div#chessground-examples', [
-      h(
-        'menu',
-        list.map((ex, id) => {
-          return h(
-            'a',
-            {
-              class: {
-                active: unit.name === ex.name,
-              },
-              on: { click: () => page(`/${id}`) },
-            },
-            ex.name
-          );
-        })
-      ),
+      //h(
+      //  'menu',
+      //  list.map((ex, id) => {
+      //    return h(
+      //      'a',
+      //      {
+      //        class: {
+      //          active: unit.name === ex.name,
+      //        },
+      //        on: { click: () => page(`/${id}`) },
+      //      },
+      //      ex.name
+      //    );
+      //  })
+      //),
       h('section.blue.merida', [
         h('div.cg-wrap', {
           hook: {

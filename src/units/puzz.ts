@@ -17,6 +17,7 @@ export const puzzle: Unit = {
     
     async function getPuzzleIdByRating(rating) {
       const tableResponse = await fetch("../../assets/puzzleIds.json");
+      //const tableResponse = await fetch("/puzzles/assets/puzzleIds.json");//For deployment!
       const puzzleIdTable = await tableResponse.json();
 
       const ratingBin = Math.max( Math.min( Math.round(rating/50)*50, 3000),400);
@@ -142,7 +143,7 @@ export const puzzle: Unit = {
         }
         };
     }
-    var startingRating=800;
+    var startingRating=1300;
     displayPuzzle(startingRating);
 
     //dummy return. Can I remove this?
