@@ -21,6 +21,10 @@ export function toColor(chess: ChessInstance): Color {
   return (chess.turn() === 'w') ? 'white' : 'black';
 }
 
+export function toOppositeColor(chess: ChessInstance): Color {
+  return (chess.turn() === 'b') ? 'white' : 'black';
+}
+
 export function playOtherSide(cg: Api, chess) {
   return (orig, dest) => {
     chess.move({from: orig, to: dest});
@@ -53,3 +57,4 @@ export function aiPlay(cg: Api, chess: ChessInstance, delay: number, firstMove: 
     }, delay);
   };
 }
+
