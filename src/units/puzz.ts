@@ -4,7 +4,7 @@ import { Unit } from './unit';
 import {  toColor, toOppositeColor, toDests, san_to_uci} from '../util'
 //import {  toDests,  playOtherSide, san_to_uci} from '../util'
 //import { toColor, toDests,  playOtherSide, san_to_uci} from '../util'
-import { uciToMove } from 'chessground/util';
+//import { uciToMove } from 'chessground/util';// doesn't handle promotion :(
 
 /* Host puzzles gotten from lichess. increment elo on correct solution
  * Can't fetch puzzle by rating directly. Make database of puzzle IDs and ratings, categorize into bins, and select relevant IDs
@@ -35,6 +35,7 @@ export const puzzle: Unit = {
       if(true){ 
           const puzzleId = await getPuzzleIdByRating(rating);
           response = await fetch('https://lichess.org/api/puzzle/'+puzzleId);
+          //response = await fetch('https://lichess.org/api/puzzle/'+'0iUQl');
       }
       const data = await response.json();
       var moveList = data.game.pgn.split(" ")
@@ -45,7 +46,6 @@ export const puzzle: Unit = {
       return [chess,data];
     };
     async function displayPuzzle(rating) {
-        console.log("puzzle rating",rating);
         
         const element = document.getElementById("currentRating");
         if (element){
@@ -54,7 +54,6 @@ export const puzzle: Unit = {
         
         const [chess,data] = await fetchPuzzleData(rating);
         const fen = chess.fen()
-        console.log(chess.fen());
         var moveIdx = 0;
         const cg = Chessground(el, {
           fen: fen,
@@ -66,7 +65,6 @@ export const puzzle: Unit = {
             dests: toDests(chess)
           }
         });
-        console.log(data);
         
         //make initial move
         var moveList = data.game.pgn.split(" ");
@@ -90,24 +88,33 @@ export const puzzle: Unit = {
     }
     function checkPuzzle(cg,chess,data,moveIdx,rating,flawless){
         return (orig, dest) => {
-        console.log("flawless",flawless );
         
-        chess.move({from: orig, to: dest, promotion: 'q'});//unable to select promotion ??? consider https://github.com/hi-ogawa/chessground-promotion
         
-        //console.log(moveIdx,data.puzzle.solution);
         if ( moveIdx < data.puzzle.solution.length ){
             //lichess solution moves are in uci
-            const correctMove = data.puzzle.solution[moveIdx];
+            const correctMove = data.puzzle.solution[moveIdx];//Ignore promotion annotation
             const lastPlayedMove = orig+dest;
-            //console.log("target",correctMove,"guess",lastPlayedMove);
-            if ( lastPlayedMove == correctMove ){
+            if ( lastPlayedMove == correctMove.slice(0,4) ){
+                //if there was a promotion, do it right
+                if(correctMove.length < 5){
+                    chess.move({from: orig, to: dest});
 
-                //if last move of solution, win! 
-                //else, play next
-                const nextMove = uciToMove(data.puzzle.solution[moveIdx+1]);
-                if(!(nextMove == null) ){
-                    chess.move({from: nextMove[0], to: nextMove[1], promotion: nextMove[2]});
-                    cg.move(nextMove[0],nextMove[1]);
+                }else{
+                    chess.move({from: orig, to: dest, promotion: correctMove[4]});//unable to select promotion ??? consider https://github.com/hi-ogawa/chessground-promotion
+                    cg.set({fen: chess.fen()});
+                }
+
+                //const nextMove = uciToMove(data.puzzle.solution[moveIdx+1]);
+                const nextMoveUci = data.puzzle.solution[moveIdx+1];
+                if(!(nextMoveUci == null) ){
+                    if(nextMoveUci.length < 5){
+                        chess.move({from: nextMoveUci.slice(0,2), to: nextMoveUci.slice(2,4)}); 
+                        cg.move(nextMoveUci.slice(0,2),nextMoveUci.slice(2,4));
+
+                    }else{
+                        chess.move({from: nextMoveUci.slice(0,2), to: nextMoveUci.slice(2,4), promotion: nextMoveUci[4]}); //promotion ignored by chessground's uciToMove.  promotion: nextMove[2]
+                        cg.set({fen: chess.fen()});
+                    }
                     cg.set({
                       turnColor: toColor(chess),
                       movable: {
@@ -115,7 +122,7 @@ export const puzzle: Unit = {
                         dests: toDests(chess)
                       }
                     });
-                }else{
+                }else{//finish and reset!
                     cg.set({
                       selectable: {
                         enabled: false,
@@ -132,10 +139,9 @@ export const puzzle: Unit = {
                 }
                 moveIdx=moveIdx+2;
             }else {
-                console.log("wrong move")
                 flawless=false;
                 //undo move on chess and cg?
-                chess.undo();
+                //chess.undo();
                 
                 cg.set({
                   fen: chess.fen(),
