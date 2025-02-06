@@ -75,6 +75,7 @@ export const puzzle: Unit = {
           draggable: {
             enabled: true,
           },
+          highlight: { lastMove: false},
         });
         
         //make initial move
@@ -91,9 +92,9 @@ export const puzzle: Unit = {
           movable: {
             color: toColor(chess),
             dests: toDests(chess)
-          }
+          },
         });
-
+        
         var flawless = true; 
         cg.set({
           movable: { events: { after: checkPuzzle(cg, chess,data, moveIdx, rating,flawless) } }
@@ -152,6 +153,7 @@ export const puzzle: Unit = {
                       draggable: {
                         enabled: false,
                       },
+                      lastMove: [],
                     });
                     if (flawless){
                         displayPuzzle(rating+30);

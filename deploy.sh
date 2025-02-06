@@ -1,5 +1,5 @@
 npm run build
-VERSION=1.0
+VERSION=1.2
 THEDIR="puzzles"
 sed -i -e "s/..\/..\/assets/\/$THEDIR\/assets/" dist/chessground-examples.js
 mv dist/chessground-examples.js dist/chessground-examples.$VERSION.js
