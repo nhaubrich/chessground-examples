@@ -14,8 +14,8 @@ export const puzzle: Unit = {
   name: 'Puzzle',
   run(el) {
     var chess = new Chess();
-    //first fetch puzzle and play moves
-    
+    const cg = Chessground(el,{});
+
     async function getPuzzleIdByRating(rating) {
       const tableResponse = await fetch("../../assets/puzzleIds.json");
       //const tableResponse = await fetch("/puzzles/assets/puzzleIds.json");//For deployment!
@@ -30,14 +30,17 @@ export const puzzle: Unit = {
     }
 
     async function fetchPuzzleData(rating) {
-      chess = new Chess();
+      chess.reset()
         
       //TODO clean up this double fetch
       var response = await fetch('https://lichess.org/api/puzzle/next');
       const puzzleId = await getPuzzleIdByRating(rating);
+      if(false){
+          await getPuzzleIdByRating(rating);
+      }
       response = await fetch('https://lichess.org/api/puzzle/'+puzzleId);
       
-          const data = await response.json();
+      const data = await response.json();
       var moveList = data.game.pgn.split(" ")
       
       for (var i=0; i < data.puzzle.initialPly; i++) {
@@ -45,6 +48,7 @@ export const puzzle: Unit = {
       };
       return [chess,data];
     };
+
     async function displayPuzzle(rating) {
         
         const element = document.getElementById("currentRating");
@@ -55,15 +59,22 @@ export const puzzle: Unit = {
         const [chess,data] = await fetchPuzzleData(rating);
         const fen = chess.fen()
         var moveIdx = 0;
-        const cg = Chessground(el, {
+        
+        cg.set({
           fen: fen,
           turnColor: toColor(chess),
           orientation: toOppositeColor(chess),
           movable: {
-            color: toColor(chess),
-            free: false,
-            dests: toDests(chess)
-          }
+          color: toColor(chess),
+          free: false,
+          dests: toDests(chess)
+          },
+        selectable: {
+            enabled: true,
+          },
+          draggable: {
+            enabled: true,
+          },
         });
         
         //make initial move
@@ -71,6 +82,8 @@ export const puzzle: Unit = {
         const firstMoveSan = moveList[data.puzzle.initialPly];
         const firstMoveUci = san_to_uci(chess,firstMoveSan);
         chess.move(firstMoveSan);
+
+        await new Promise(r => setTimeout(r, 1500));
         cg.move(firstMoveUci[0],firstMoveUci[1]);
         cg.set({
           fen: chess.fen(),
@@ -80,15 +93,14 @@ export const puzzle: Unit = {
             dests: toDests(chess)
           }
         });
+
         var flawless = true; 
         cg.set({
           movable: { events: { after: checkPuzzle(cg, chess,data, moveIdx, rating,flawless) } }
         });
-        return cg;
     }
     function checkPuzzle(cg,chess,data,moveIdx,rating,flawless){
         return (orig, dest) => {
-        
         
         if ( moveIdx < data.puzzle.solution.length ){
             //lichess solution moves are in uci
@@ -104,7 +116,6 @@ export const puzzle: Unit = {
                     cg.set({fen: chess.fen()});
                 }
 
-                //const nextMove = uciToMove(data.puzzle.solution[moveIdx+1]);
                 const nextMoveUci = data.puzzle.solution[moveIdx+1];
                 if(!(nextMoveUci == null) ){
                     if(nextMoveUci.length < 5){
@@ -122,6 +133,17 @@ export const puzzle: Unit = {
                         dests: toDests(chess)
                       }
                     });
+                    
+                    //refresh cg if fen mismatches (from en passant)
+
+                    if(chess.fen().split(" ")[0] !== cg.getFen()){
+                        console.log("fixing weirdness");
+                        cg.set({fen: chess.fen()});
+                    }
+                    //console.log("jschess fen",chess.fen());
+                    //console.log("cgFen",cg.getFen());
+
+
                 }else{//finish and reset!
                     cg.set({
                       selectable: {
@@ -140,9 +162,7 @@ export const puzzle: Unit = {
                 moveIdx=moveIdx+2;
             }else {
                 flawless=false;
-                //undo move on chess and cg?
-                //chess.undo();
-                
+                //reset board 
                 cg.set({
                   fen: chess.fen(),
                   turnColor: toColor(chess),
@@ -155,18 +175,17 @@ export const puzzle: Unit = {
         }
         };
     }
-    var startingRating=1300;
+    var startingRating=1500;
     displayPuzzle(startingRating);
 
     //dummy return. Can I remove this?
-    const cg = Chessground(el, {
+    const dcg = Chessground(el, {
       movable: {
         color: 'white',
         free: false,
-        dests: toDests(chess)
       }
     });
-    return cg;
+    return dcg;
 
   }
 };
