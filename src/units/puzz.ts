@@ -7,7 +7,8 @@ import {  toColor, toOppositeColor, toDests, san_to_uci} from '../util'
 //import { uciToMove } from 'chessground/util';// doesn't handle promotion :(
 
 /* Host puzzles gotten from lichess. increment elo on correct solution
- * Can't fetch puzzle by rating directly. Make database of puzzle IDs and ratings, categorize into bins, and select relevant IDs
+ * todo:
+ *  - refactor code to avoid recursion (potential memory leak?)
  * */
 export const puzzle: Unit = {
   name: 'Puzzle',
@@ -30,14 +31,13 @@ export const puzzle: Unit = {
 
     async function fetchPuzzleData(rating) {
       chess = new Chess();
-
+        
+      //TODO clean up this double fetch
       var response = await fetch('https://lichess.org/api/puzzle/next');
-      if(true){ 
-          const puzzleId = await getPuzzleIdByRating(rating);
-          response = await fetch('https://lichess.org/api/puzzle/'+puzzleId);
-          //response = await fetch('https://lichess.org/api/puzzle/'+'0iUQl');
-      }
-      const data = await response.json();
+      const puzzleId = await getPuzzleIdByRating(rating);
+      response = await fetch('https://lichess.org/api/puzzle/'+puzzleId);
+      
+          const data = await response.json();
       var moveList = data.game.pgn.split(" ")
       
       for (var i=0; i < data.puzzle.initialPly; i++) {
