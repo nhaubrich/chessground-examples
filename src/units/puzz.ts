@@ -31,13 +31,10 @@ export const puzzle: Unit = {
 
     async function fetchPuzzleData(rating) {
       chess.reset()
-        
+       
       //TODO clean up this double fetch
       var response = await fetch('https://lichess.org/api/puzzle/next');
       const puzzleId = await getPuzzleIdByRating(rating);
-      if(false){
-          await getPuzzleIdByRating(rating);
-      }
       response = await fetch('https://lichess.org/api/puzzle/'+puzzleId);
       
       const data = await response.json();
@@ -50,14 +47,13 @@ export const puzzle: Unit = {
     };
 
     async function displayPuzzle(rating) {
-        
         const element = document.getElementById("currentRating");
         if (element){
             element.textContent = "Current Rating: "+String(rating);
         }
         
         const [chess,data] = await fetchPuzzleData(rating);
-        const fen = chess.fen()
+        const fen = chess.fen();
         var moveIdx = 0;
         
         cg.set({
@@ -77,7 +73,6 @@ export const puzzle: Unit = {
           },
           highlight: { lastMove: false},
         });
-        
         //make initial move
         var moveList = data.game.pgn.split(" ");
         const firstMoveSan = moveList[data.puzzle.initialPly];
@@ -99,6 +94,7 @@ export const puzzle: Unit = {
         cg.set({
           movable: { events: { after: checkPuzzle(cg, chess,data, moveIdx, rating,flawless) } }
         });
+
     }
     function checkPuzzle(cg,chess,data,moveIdx,rating,flawless){
         return (orig, dest) => {
@@ -138,11 +134,8 @@ export const puzzle: Unit = {
                     //refresh cg if fen mismatches (from en passant)
 
                     if(chess.fen().split(" ")[0] !== cg.getFen()){
-                        console.log("fixing weirdness");
                         cg.set({fen: chess.fen()});
                     }
-                    //console.log("jschess fen",chess.fen());
-                    //console.log("cgFen",cg.getFen());
 
 
                 }else{//finish and reset!
@@ -180,14 +173,7 @@ export const puzzle: Unit = {
     var startingRating=1500;
     displayPuzzle(startingRating);
 
-    //dummy return. Can I remove this?
-    const dcg = Chessground(el, {
-      movable: {
-        color: 'white',
-        free: false,
-      }
-    });
-    return dcg;
+    return cg;
 
   }
 };
